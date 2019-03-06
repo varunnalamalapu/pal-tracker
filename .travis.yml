@@ -10,13 +10,9 @@ jobs:
   include:
     - stage: build and publish
       language: java
-<<<<<<< HEAD
       jdk: openjdk8
-=======
-      jdk: openjdk11
       addons:
         mariadb: '10.2'
->>>>>>> 27eef47... Add task for migrating databases
       install: skip
       before_script:
         - mysql -uroot < databases/tracker/create_databases.sql
