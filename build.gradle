@@ -32,5 +32,6 @@ test.environment([
 
 dependencies {
     compile("org.springframework.boot:spring-boot-starter-web:$springBootVersion")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7")
     testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
 }
