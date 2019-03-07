@@ -1,5 +1,8 @@
 package io.pivotal.pal.tracker;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,14 +15,20 @@ import java.util.List;
 @RequestMapping("/time-entries")
 public class TimeEntryController {
     TimeEntryRepository repository;
-    public TimeEntryController(TimeEntryRepository repository) {
+    private final DistributionSummary timeEntrySummary;
+    private final Counter actionCounter;
 
+    public TimeEntryController(TimeEntryRepository repository, MeterRegistry meterRegistry) {
         this.repository=repository;
+        timeEntrySummary =meterRegistry.summary("timeEntry.summary");
+        actionCounter = meterRegistry.counter("timeEntry.actionCounter");
     }
 
     @PostMapping
     public ResponseEntity<TimeEntry> create(@RequestBody TimeEntry entry){
         TimeEntry entry1=repository.create(entry);
+        actionCounter.increment();
+        timeEntrySummary.record(repository.list().size());
         return ResponseEntity.status(HttpStatus.CREATED).body(entry1);
     }
 
@@ -29,12 +38,13 @@ public class TimeEntryController {
         if(entry1==null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(entry1);
         }
-
+        actionCounter.increment();
         return ResponseEntity.ok(entry1);
     }
 
     @GetMapping
     public ResponseEntity<List<TimeEntry>> list(){
+        actionCounter.increment();
         return ResponseEntity.status(HttpStatus.OK).body(repository.list());
     }
 
@@ -44,12 +54,15 @@ public class TimeEntryController {
         if(entry == null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(entry);
         }
+        actionCounter.increment();
         return ResponseEntity.ok(entry);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<TimeEntry> delete(@PathVariable Long id){
         repository.delete(id);
+        actionCounter.increment();
+        timeEntrySummary.record(repository.list().size());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(repository.find(id));
     }
 }
